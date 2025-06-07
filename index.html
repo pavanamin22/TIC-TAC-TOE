@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tic Tac Toe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(45deg, #0a0a0a, #1a1a2e);
+            color: #e0e0e0;
+            font-family: 'Roboto Mono', monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: glowBackground 8s ease-in-out infinite;
+        }
+        @keyframes glowBackground {
+            0% { background: linear-gradient(45deg, #0a0a0a, #1a1a2e); }
+            50% { background: linear-gradient(45deg, #1a1a2e, #2a2a4e); }
+            100% { background: linear-gradient(45deg, #0a0a0a, #1a1a2e); }
+        }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 5em;
+            margin-bottom: 30px;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #ff00ff;
+            animation: neonFlicker 2s infinite alternate;
+        }
+        @keyframes neonFlicker {
+            0% { text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #ff00ff; }
+            100% { text-shadow: 0 0 15px #00ffcc, 0 0 25px #00ffcc, 0 0 40px #ff00ff; }
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(145deg, #1a1a2e, #0a0a0a);
+            border: 3px solid #00ffcc;
+            box-shadow: inset 0 0 10px #00ffcc, 0 0 15px #00ffcc;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            font-family: 'Orbitron', sans-serif;
+            color: #ff00ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 204, 0.3), transparent);
+            transition: 0.5s;
+        }
+        .cell:hover::before {
+            left: 100%;
+        }
+        .cell:hover {
+            transform: translateY(-5px);
+            box-shadow: inset 0 0 15px #ff00ff, 0 0 25px #ff00ff;
+            border-color: #ff00ff;
+        }
+        .cell.x {
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+        .cell.o {
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 2em;
+            font-family: 'Roboto Mono', monospace;
+            text-shadow: 0 0 10px #00ffcc;
+            animation: pulseText 1.5s ease-in-out infinite;
+        }
+        @keyframes pulseText {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        #status.x-turn {
+            color: #00ffcc;
+            text-shadow: 0 0 15px #00ffcc;
+        }
+        #status.o-turn {
+            color: #ff00ff;
+            text-shadow: 0 0 15px #ff00ff;
+        }
+        #score {
+            margin-top: 10px;
+            font-size: 1.5em;
+            display: flex;
+            gap: 30px;
+            font-family: 'Roboto Mono', monospace;
+        }
+        #score span {
+            font-weight: bold;
+            color: #00ffcc;
+            text-shadow: 0 0 5px #00ffcc;
+        }
+        .button-container {
+            margin-top: 10px;
+            display: flex;
+            gap: 20px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 1.5em;
+            font-family: 'Orbitron', sans-serif;
+            border: none;
+            border-radius: 10px;
+            color: #0a0a0a;
+            cursor: pointer;
+            background: linear-gradient(45deg, #00ffcc, #ff00ff);
+            box-shadow: 0 0 10px #00ffcc;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            box-shadow: 0 0 20px #ff00ff;
+            transform: translateY(-3px);
+        }
+        #reset {
+            background: linear-gradient(45deg, #ff00ff, #ff4d4d);
+        }
+        #reset:hover {
+            background: linear-gradient(45deg, #ff4d4d, #ff00ff);
+        }
+        #reset-score {
+            background: linear-gradient(45deg, #00ffcc, #00ccff);
+        }
+        #reset-score:hover {
+            background: linear-gradient(45deg, #00ccff, #00ffcc);
+        }
+        .confetti {
+            position: fixed;
+            font-size: 1.5em;
+            pointer-events: none;
+            animation: fall 3s linear forwards;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti-swirl {
+            position: fixed;
+            font-size: 1.2em;
+            pointer-events: none;
+            animation: swirl 4s ease-out forwards;
+        }
+        @keyframes swirl {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) translateX(100vw) rotate(1080deg); opacity: 0; }
+        }
+        .confetti-bounce {
+            position: fixed;
+            font-size: 1.8em;
+            pointer-events: none;
+            animation: bounce 3.5s ease-in-out forwards;
+        }
+        @keyframes bounce {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            50% { transform: translateY(0vh) rotate(360deg); opacity: 0.8; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #1a1a2e, #2a2a4e);
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px #00ffcc;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+            border: 2px solid #ff00ff;
+        }
+        .popup.show {
+            display: block;
+        }
+        .popup h2 {
+            margin: 0 0 15px;
+            font-size: 2em;
+            font-family: 'Orbitron', sans-serif;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+        .popup button {
+            background: linear-gradient(45deg, #ff00ff, #ff4d4d);
+            padding: 10px 20px;
+            font-size: 1.2em;
+        }
+        .popup button:hover {
+            background: linear-gradient(45deg, #ff4d4d, #ff00ff);
+        }
+        #color-changer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 2.5em;
+            cursor: pointer;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+            transition: transform 0.3s;
+        }
+        #color-changer:hover {
+            transform: rotate(360deg);
+        }
+        #win-line {
+            position: absolute;
+            background: linear-gradient(90deg, #00ffcc, #ff00ff);
+            box-shadow: 0 0 15px #00ffcc, 0 0 25px #ff00ff;
+            z-index: 500;
+        }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 3.5em;
+                margin-bottom: 20px;
+            }
+            #board {
+                grid-template-columns: repeat(3, 80px);
+                grid-gap: 8px;
+                padding: 10px;
+            }
+            .cell {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5em;
+                border-radius: 8px;
+            }
+            #status {
+                margin-top: 15px;
+                font-size: 1.5em;
+            }
+            #score {
+                margin-top: 8px;
+                font-size: 1.2em;
+                gap: 20px;
+            }
+            .button-container {
+                margin-top: 8px;
+                gap: 15px;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 1.2em;
+            }
+            .popup {
+                padding: 15px 25px;
+            }
+            .popup h2 {
+                font-size: 1.5em;
+                margin-bottom: 10px;
+            }
+            .popup button {
+                padding: 8px 15px;
+                font-size: 1em;
+            }
+            #color-changer {
+                font-size: 2em;
+                top: 15px;
+                right: 15px;
+            }
+        }
+        @media (max-width: 400px) {
+            h1 {
+                font-size: 2.5em;
+                margin-bottom: 15px;
+            }
+            #board {
+                grid-template-columns: repeat(3, 60px);
+                grid-gap: 6px;
+                padding: 8px;
+            }
+            .cell {
+                width: 60px;
+                height: 60px;
+                font-size: 2em;
+                border-radius: 6px;
+            }
+            #status {
+                margin-top: 10px;
+                font-size: 1.2em;
+            }
+            #score {
+                margin-top: 6px;
+                font-size: 1em;
+                gap: 15px;
+            }
+            .button-container {
+                margin-top: 6px;
+                gap: 10px;
+            }
+            button {
+                padding: 8px 15px;
+                font-size: 1em;
+            }
+            .popup {
+                padding: 10px 20px;
+            }
+            .popup h2 {
+                font-size: 1.2em;
+                margin-bottom: 8px;
+            }
+            .popup button {
+                padding: 6px 12px;
+                font-size: 0.9em;
+            }
+            #color-changer {
+                font-size: 1.5em;
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+    <div id="color-changer">⚡️</div>
+    <div id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+    <div id="score">
+        <span>X Wins: <span id="x-score">0</span></span>
+        <span>O Wins: <span id="o-score">0</span></span>
+    </div>
+    <div id="status">Player X's Turn</div>
+    <div class="button-container">
+        <button id="reset">Reset Game</button>
+        <button id="reset-score">Reset Score</button>
+    </div>
+    <div id="popup" class="popup">
+        <h2 id="popup-message"></h2>
+        <button id="popup-reset">Reset Game</button>
+    </div>
+    <audio id="click-sound" preload="auto">
+        <source src="data:audio/mp3;base64,/+MYxAAAAA...[shortened for brevity, full base64 for click sound]..." type="audio/mpeg">
+    </audio>
+    <audio id="win-sound" preload="auto">
+        <source src="data:audio/mp3;base64,/+MYxAAAAA...[shortened for brevity, full base64 for win sound]..." type="audio/mpeg">
+    </audio>
+    <audio id="draw-sound" preload="auto">
+        <source src="data:audio/mp3;base64,/+MYxAAAAA...[shortened for brevity, full base64 for draw sound]..." type="audio/mpeg">
+    </audio>
+
+    <script>
+        const cells = document.querySelectorAll('.cell');
+        const status = document.getElementById('status');
+        const resetButton = document.getElementById('reset');
+        const resetScoreButton = document.getElementById('reset-score');
+        const popup = document.getElementById('popup');
+        const popupMessage = document.getElementById('popup-message');
+        const popupResetButton = document.getElementById('popup-reset');
+        const colorChanger = document.getElementById('color-changer');
+        const xScoreElement = document.getElementById('x-score');
+        const oScoreElement = document.getElementById('o-score');
+        const clickSound = document.getElementById('click-sound');
+        const winSound = document.getElementById('win-sound');
+        const drawSound = document.getElementById('draw-sound');
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let gameActive = true;
+        let xScore = parseInt(localStorage.getItem('xScore') || '0');
+        let oScore = parseInt(localStorage.getItem('oScore') || '0');
+
+        const winningCombinations = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6] // Diagonals
+        ];
+
+        const colorSchemes = [
+            {
+                cellBorder: '#00ffcc',
+                cellHover: '#ff00ff',
+                cellShadow: '#00ffcc',
+                cellHoverShadow: '#ff00ff',
+                winLine: 'linear-gradient(90deg, #00ffcc, #ff00ff)',
+                statusX: '#00ffcc',
+                statusO: '#ff00ff'
+            },
+            {
+                cellBorder: '#ff4d4d',
+                cellHover: '#00ccff',
+                cellShadow: '#ff4d4d',
+                cellHoverShadow: '#00ccff',
+                winLine: 'linear-gradient(90deg, #ff4d4d, #00ccff)',
+                statusX: '#ff4d4d',
+                statusO: '#00ccff'
+            },
+            {
+                cellBorder: '#ffcc00',
+                cellHover: '#9933ff',
+                cellShadow: '#ffcc00',
+                cellHoverShadow: '#9933ff',
+                winLine: 'linear-gradient(90deg, #ffcc00, #9933ff)',
+                statusX: '#ffcc00',
+                statusO: '#9933ff'
+            }
+        ];
+
+        xScoreElement.textContent = xScore;
+        oScoreElement.textContent = oScore;
+
+        cells.forEach(cell => {
+            cell.addEventListener('click', () => handleCellClick(cell));
+        });
+
+        resetButton.addEventListener('click', resetGame);
+        popupResetButton.addEventListener('click', resetGame);
+        resetScoreButton.addEventListener('click', resetScore);
+        colorChanger.addEventListener('click', changeColors);
+
+        function handleCellClick(cell) {
+            const index = cell.getAttribute('data-index');
+            if (board[index] !== '' || !gameActive) return;
+
+            board[index] = currentPlayer;
+            cell.textContent = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase());
+            clickSound.play().catch(e => console.error('Click sound failed:', e));
+
+            if (checkWin()) {
+                status.textContent = `Player ${currentPlayer} Wins!`;
+                gameActive = false;
+                showPopup(`Player ${currentPlayer} Won!`);
+                updateScore(currentPlayer);
+                triggerConfetti();
+                winSound.play().catch(e => console.error('Win sound failed:', e));
+                drawWinningLine();
+                return;
+            }
+
+            if (board.every(cell => cell !== '')) {
+                status.textContent = "It's a Draw!";
+                gameActive = false;
+                showPopup("It's a Draw!");
+                drawSound.play().catch(e => console.error('Draw sound failed:', e));
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            status.textContent = `Player ${currentPlayer}'s Turn`;
+            status.classList.remove('x-turn', 'o-turn');
+            status.classList.add(currentPlayer === 'X' ? 'x-turn' : 'o-turn');
+        }
+
+        function checkWin() {
+            return winningCombinations.find(combination => {
+                return combination.every(index => {
+                    return board[index] === currentPlayer;
+                });
+            });
+        }
+
+        function updateScore(winner) {
+            if (winner === 'X') {
+                xScore++;
+                xScoreElement.textContent = xScore;
+                localStorage.setItem('xScore', xScore);
+            } else if (winner === 'O') {
+                oScore++;
+                oScoreElement.textContent = oScore;
+                localStorage.setItem('oScore', oScore);
+            }
+        }
+
+        function resetScore() {
+            xScore = 0;
+            oScore = 0;
+            xScoreElement.textContent = xScore;
+            oScoreElement.textContent = oScore;
+            localStorage.setItem('xScore', xScore);
+            localStorage.setItem('oScore', oScore);
+            resetGame();
+        }
+
+        function drawWinningLine() {
+            const winCombo = checkWin();
+            if (!winCombo) return;
+
+            const boardRect = document.getElementById('board').getBoundingClientRect();
+            const cell0Rect = cells[winCombo[0]].getBoundingClientRect();
+            const cell2Rect = cells[winCombo[2]].getBoundingClientRect();
+
+            const line = document.createElement('div');
+            line.id = 'win-line';
+            document.getElementById('board').appendChild(line);
+
+            const dx = cell2Rect.left + cell2Rect.width / 2 - (cell0Rect.left + cell0Rect.width / 2);
+            const dy = cell2Rect.top + cell2Rect.height / 2 - (cell0Rect.top + cell0Rect.height / 2);
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+            line.style.width = `${length}px`;
+            line.style.height = '5px';
+            line.style.position = 'absolute';
+            line.style.left = `${cell0Rect.left + cell0Rect.width / 2 - boardRect.left}px`;
+            line.style.top = `${cell0Rect.top + cell0Rect.height / 2 - boardRect.top}px`;
+            line.style.transform = `rotate(${angle}deg)`;
+            line.style.transformOrigin = '0 0';
+        }
+
+        function triggerConfetti() {
+            const emojis = ['⚡️', '✨', '★', '🔥', '💫', '🎇', '🌌'];
+            const animationTypes = ['confetti', 'confetti-swirl', 'confetti-bounce'];
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                const animationType = animationTypes[Math.floor(Math.random() * animationTypes.length)];
+                confetti.className = animationType;
+                confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                confetti.style.left = `${Math.random() * 100}vw`;
+                const delay = Math.random() * 2;
+                confetti.style.animationDelay = `${delay}s`;
+                confetti.style.color = `hsl(${Math.random() * 360}, 80%, 70%)`;
+                confetti.style.fontSize = `${1 + Math.random() * 1.2}em`;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), (3 + delay) * 1000);
+            }
+        }
+
+        function showPopup(message) {
+            popupMessage.textContent = message;
+            popup.classList.add('show');
+        }
+
+        function resetGame() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            gameActive = true;
+            status.textContent = `Player ${currentPlayer}'s Turn`;
+            status.classList.remove('x-turn', 'o-turn');
+            status.classList.add('x-turn');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('x', 'o');
+            });
+            popup.classList.remove('show');
+            const winLine = document.getElementById('win-line');
+            if (winLine) winLine.remove();
+        }
+
+        function changeColors() {
+            const scheme = colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+            cells.forEach(cell => {
+                cell.style.borderColor = scheme.cellBorder;
+                cell.style.boxShadow = `inset 0 0 10px ${scheme.cellShadow}, 0 0 15px ${scheme.cellShadow}`;
+                cell.style.setProperty('--hover-shadow', `inset 0 0 15px ${scheme.cellHoverShadow}, 0 0 25px ${scheme.cellHoverShadow}`);
+                cell.style.setProperty('--hover-border', scheme.cellHover);
+            });
+
+            let hoverStyle = document.getElementById('cell-hover-style');
+            if (!hoverStyle) {
+                hoverStyle = document.createElement('style');
+                hoverStyle.id = 'cell-hover-style';
+                document.head.appendChild(hoverStyle);
+            }
+            hoverStyle.innerHTML = `
+                .cell:hover {
+                    box-shadow: var(--hover-shadow);
+                    border-color: var(--hover-border);
+                    transform: translateY(-5px);
+                }
+                .x-turn {
+                    color: ${scheme.statusX};
+                    text-shadow: 0 0 15px ${scheme.statusX};
+                }
+                .o-turn {
+                    color: ${scheme.statusO};
+                    text-shadow: 0 0 15px ${scheme.statusO};
+                }
+                #win-line {
+                    background: ${scheme.winLine};
+                    box-shadow: 0 0 15px ${scheme.cellShadow}, 0 0 25px ${scheme.cellHoverShadow};
+                }
+            `;
+        }
+
+        status.classList.add('x-turn');
+        changeColors();
+    </script>
+</body>
+</html>
